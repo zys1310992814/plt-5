@@ -1,0 +1,38 @@
+-----------------------------------------------------------------------------
+生成动态库
+gcc test_a.c test_b.c test_c.c --shared -fPIC -o libtest.so
+gcc test_a.c test_b.c test_c.c -m32 -no-pie -g --shared -fPIC -o libtest.so
+-----------------------------------------------------------------------------
+链接动态库
+gcc test_x64.c -L . -ltest -no-pie -g -o test
+gcc test.c -L . -ltest -m32 -no-pie -g -o test
+（(-L .)表示动态链接库在本目录， (-ltest)表示动态链接库的名字为lib(test).so）。
+-----------------------------------------------------------------------------
+readelf -r test > test-r
+-m32 -no-pie -g -o
+hexdump -C test > hexdump-C
+objdump -s test > objdump-s
+objdump -S test > objdump-S
+objdump -d test > objdump-d
+readelf -r test > readelf-r
+readelf -S test > readelf-S
+readelf -x .got test > got
+-----------------------------------------------------------------------------
+然后通过ldd ./test查看有哪些动态链接库和可执行程序有关联，结果发现libtest.so没有关联。
+运行./test出现：./test: error while loading shared libraries: libtest.so: cannot open shared object file: No such file or directory
+也就是说找不到这个动态链接库，但是我们已经在编译test.c的时候加入路径了？
+-----------------------------------------------------------------------------
+这时候修改LD_LIBRARY_PATH变量
+#vim ~/.bashrc
+添加：
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/xiaomi/learn-gcc/plt-2
+退出以后
+#source ~/.bashrc
+-----------------------------------------------------------------------------
+或者/etc/ld.so.conf添加动态链接库的路径。
+#vim /etc/ld.so.conf
+添加一行：/home/xxx/Test
+然后刷新一把
+#/sbin/ldconfig -v
+再编译执行成功。
+-----------------------------------------------------------------------------

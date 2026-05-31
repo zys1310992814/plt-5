@@ -1,0 +1,35 @@
+--------------------------------------------------------------------------------
+https://github.com/git-lfs/git-lfs/wiki/Installation
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+sudo os=ubuntu dist=jammy ./script.deb.sh
+sudo apt-get update
+sudo apt-get install git-lfs
+--------------------------------------------------------------------------------
+安装到C:\Program Files\Git\bin\Git LFS
+git init
+git lfs install
+git lfs track *
+git add .gitattributes
+git commit -m "pre"
+git remote add origin git@github.com:zys1310992814/largefile.git
+git push origin main
+git add *
+git commit -m "Git LFS commit"
+git push origin main
+--------------------------------------------------------------------------------
+删除大文件方法
+https://www.cnblogs.com/xym4869/p/11947181.html
+1.查看哪个文件过大了
+2.重写commit，删除大文件
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch cmder.zip' --prune-empty --tag-name-filter cat -- --all
+P.S.
+如果报错：Cannot rewrite branches: Your index contains uncommitted changes.
+解决：git stash
+3.推送修改后的repo
+git push origin master --force
+4.清理和回收空间
+虽然上面我们已经删除了文件, 但是我们的repo里面仍然保留了这些objects, 等待垃圾回收(GC), 所以我们要用命令彻底清除它, 并收回空间，命令如下:
+rm -rf .git/refs/original/
+git reflog expire --expire=now --all
+git gc --prune=now
+--------------------------------------------------------------------------------
