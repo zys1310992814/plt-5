@@ -1,0 +1,31 @@
+# 构建产物
+test
+test_x64
+libtest.so
+libtest_x64.so
+
+# 分析 dump 文件
+got
+got_plt
+got_x64
+got_plt_x64
+hexdump-C
+hexdump-C_x64
+objdump-d
+objdump-d_x64
+objdump-plt
+objdump-plt_x64
+objdump-plt_got
+objdump-plt_got_x64
+objdump-plt_sec
+objdump-plt_sec_x64
+objdump-R
+objdump-R_x64
+objdump-S
+objdump-S_x64
+objdump-s
+objdump-s_x64
+readelf-r
+readelf-r_x64
+readelf-S
+readelf-S_x64

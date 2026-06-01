@@ -1,0 +1,56 @@
+name: 构建与发布
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 缓存 APT 包
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/build-and-release.yml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-
+
+      - name: 安装依赖
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib libc6-dev-i386 binutils
+
+      - name: 编译 32 位目标
+        run: make test
+
+      - name: 编译 64 位目标
+        run: make test_x64
+
+      - name: 收集构建产物
+        run: |
+          mkdir -p dist
+          cp test test_x64 libtest.so libtest_x64.so dist/ 2>/dev/null || true
+
+      - name: 打包构建产物
+        run: tar -czf plt5-binaries.tar.gz -C dist .
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: plt5-binaries
+          path: plt5-binaries.tar.gz
+          retention-days: 30
+
+      - name: 发布到 Release（仅标签推送时）
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: plt5-binaries.tar.gz
+          generate_release_notes: true
