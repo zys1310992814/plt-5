@@ -23,37 +23,54 @@ int main(void)
     printf("  printf   -> %p\n", (void*)got_printf);
     printf("\n");
 
-    printf("+----------------------+------------------------+------------------------+\n");
-    printf("| 函数名                 | 调用前 GOT 值               | 调用后 GOT 值               |\n");
-    printf("+----------------------+------------------------+------------------------+\n");
-
-#define PRINT_GOT_BEFORE64(label, ptr) \
-    printf("| %-20s | %-22p | %-22p |\n", label, (void*)*(ptr), (void*)*(ptr))
-
-    PRINT_GOT_BEFORE64("test_a",  got_test_a);
-    PRINT_GOT_BEFORE64("puts",    got_puts);
-    PRINT_GOT_BEFORE64("getpid",  got_getpid);
-    PRINT_GOT_BEFORE64("printf",  got_printf);
+    // ====== 先记录调用前的 GOT 值 ======
+    uint64_t before_test_a = *got_test_a;
+    uint64_t before_puts   = *got_puts;
+    uint64_t before_getpid = *got_getpid;
+    uint64_t before_printf = *got_printf;
 
     // ====== 实际调用，触发延迟绑定 ======
     test_a();
 
+    // ====== 再记录调用后的 GOT 值 ======
+    uint64_t after_test_a = *got_test_a;
+    uint64_t after_puts   = *got_puts;
+    uint64_t after_getpid = *got_getpid;
+    uint64_t after_printf = *got_printf;
+
+    // ====== 打印对比表格，每行同时显示调用前和调用后的值 ======
+    printf("+----------------------+------------------------+------------------------+\n");
+    printf("| 函数名                 | 调用前 GOT 值               | 调用后 GOT 值               |\n");
     printf("+----------------------+------------------------+------------------------+\n");
 
-#define PRINT_GOT_AFTER64(label, ptr) \
-    printf("| %-20s | %-22p | %-22p |\n", label, (void*)*(ptr), (void*)*(ptr))
+#define PRINT_GOT_ROW64(label, before_val, after_val) \
+    printf("| %-20s | 0x%014lx          | 0x%014lx          |\n", \
+           label, before_val, after_val)
 
-    PRINT_GOT_AFTER64("test_a",  got_test_a);
-    PRINT_GOT_AFTER64("puts",    got_puts);
-    PRINT_GOT_AFTER64("getpid",  got_getpid);
-    PRINT_GOT_AFTER64("printf",  got_printf);
+    PRINT_GOT_ROW64("test_a",  before_test_a, after_test_a);
+    PRINT_GOT_ROW64("puts",    before_puts,   after_puts);
+    PRINT_GOT_ROW64("getpid",  before_getpid, after_getpid);
+    PRINT_GOT_ROW64("printf",  before_printf, after_printf);
     printf("+----------------------+------------------------+------------------------+\n\n");
 
-    printf("[延迟绑定前] GOT 表项指向 PLT0 公共桩，等待 _dl_runtime_resolve 解析\n");
-    printf("[延迟绑定后] GOT 表项被动态链接器更新为函数真实地址\n");
-    printf("[注意] test_a 内部调用了 puts/printf，会间接触发这些函数的解析\n\n");
+    // 解析状态说明
+    printf("[解析状态说明]\n");
+#define CHECK64(label, before_val, after_val) \
+    do { \
+        if ((before_val) != (after_val)) \
+            printf("  %-20s  调用前 PLT 桩 → 调用后已解析为真实地址 ✅\n", label); \
+        else if ((after_val) & 0x7f0000000000) \
+            printf("  %-20s  调用前已由运行时预先解析 ✅\n", label); \
+        else \
+            printf("  %-20s  从未被调用，GOT 保持 PLT 桩地址 ⏭️\n", label); \
+    } while(0)
 
-    printf(">>> 进程 PID=%d，正在挂起，Ctrl+C 退出...\n", getpid());
+    CHECK64("test_a",  before_test_a, after_test_a);
+    CHECK64("puts",    before_puts,   after_puts);
+    CHECK64("getpid",  before_getpid, after_getpid);
+    CHECK64("printf",  before_printf, after_printf);
+
+    printf("\n>>> 进程 PID=%d，正在挂起，Ctrl+C 退出...\n", getpid());
     while(1);
     return 0;
 }

@@ -29,47 +29,68 @@ int main(void)
     printf("  test_b             -> %p\n", (void*)got_test_b);
     printf("\n");
 
-    printf("+--------------------------+------------------+------------------+\n");
-    printf("| 函数名                     | 调用前 GOT 值        | 调用后 GOT 值        |\n");
-    printf("+--------------------------+------------------+------------------+\n");
-
-#define PRINT_GOT_BEFORE(label, ptr) \
-    printf("| %-24s | %p           | %p           |\n", \
-           label, (void*)(uintptr_t)*(ptr), (void*)(uintptr_t)*(ptr))
-
-    PRINT_GOT_BEFORE("__libc_start_main", got_libc);
-    PRINT_GOT_BEFORE("printf",           got_printf);
-    PRINT_GOT_BEFORE("test_a",           got_test_a);
-    PRINT_GOT_BEFORE("test_c",           got_test_c);
-    PRINT_GOT_BEFORE("getpid",           got_getpid);
-    PRINT_GOT_BEFORE("puts",             got_puts);
-    PRINT_GOT_BEFORE("test_b",           got_test_b);
+    // ====== 先记录调用前的 GOT 值 ======
+    uint32_t before_libc   = *got_libc;
+    uint32_t before_printf = *got_printf;
+    uint32_t before_test_a = *got_test_a;
+    uint32_t before_test_c = *got_test_c;
+    uint32_t before_getpid = *got_getpid;
+    uint32_t before_puts   = *got_puts;
+    uint32_t before_test_b = *got_test_b;
 
     // ====== 实际调用，触发延迟绑定 ======
     test_a();
     test_b();
     test_c();
 
+    // ====== 再记录调用后的 GOT 值 ======
+    uint32_t after_libc   = *got_libc;
+    uint32_t after_printf = *got_printf;
+    uint32_t after_test_a = *got_test_a;
+    uint32_t after_test_c = *got_test_c;
+    uint32_t after_getpid = *got_getpid;
+    uint32_t after_puts   = *got_puts;
+    uint32_t after_test_b = *got_test_b;
+
+    // ====== 打印对比表格，每行同时显示调用前和调用后的值 ======
+    printf("+--------------------------+------------------+------------------+\n");
+    printf("| 函数名                     | 调用前 GOT 值        | 调用后 GOT 值        |\n");
     printf("+--------------------------+------------------+------------------+\n");
 
-#define PRINT_GOT_AFTER(label, ptr) \
-    printf("| %-24s | %p           | %p           |\n", \
-           label, (void*)(uintptr_t)*(ptr), (void*)(uintptr_t)*(ptr))
+#define PRINT_GOT_ROW(label, before_val, after_val) \
+    printf("| %-24s | 0x%08x       | 0x%08x       |\n", \
+           label, before_val, after_val)
 
-    PRINT_GOT_AFTER("__libc_start_main", got_libc);
-    PRINT_GOT_AFTER("printf",           got_printf);
-    PRINT_GOT_AFTER("test_a",           got_test_a);
-    PRINT_GOT_AFTER("test_c",           got_test_c);
-    PRINT_GOT_AFTER("getpid",           got_getpid);
-    PRINT_GOT_AFTER("puts",             got_puts);
-    PRINT_GOT_AFTER("test_b",           got_test_b);
+    PRINT_GOT_ROW("__libc_start_main", before_libc,   after_libc);
+    PRINT_GOT_ROW("printf",           before_printf, after_printf);
+    PRINT_GOT_ROW("test_a",           before_test_a, after_test_a);
+    PRINT_GOT_ROW("test_c",           before_test_c, after_test_c);
+    PRINT_GOT_ROW("getpid",           before_getpid, after_getpid);
+    PRINT_GOT_ROW("puts",             before_puts,   after_puts);
+    PRINT_GOT_ROW("test_b",           before_test_b, after_test_b);
     printf("+--------------------------+------------------+------------------+\n\n");
 
-    printf("[延迟绑定前] GOT 表项指向 PLT 桩的下一条指令（push + jmp PLT0）\n");
-    printf("[延迟绑定后] GOT 表项被 _dl_runtime_resolve 更新为函数真实地址\n");
-    printf("[注意] test_a/c 内部调用了 printf/puts，会间接触发这些函数的解析\n\n");
+    // 解析状态说明
+    printf("[解析状态说明]\n");
+#define CHECK(label, before_val, after_val) \
+    do { \
+        if ((before_val) != (after_val)) \
+            printf("  %-20s  调用前 PLT 桩 → 调用后已解析为真实地址 ✅\n", label); \
+        else if ((after_val) & 0xf0000000) \
+            printf("  %-20s  调用前已由运行时预先解析 ✅\n", label); \
+        else \
+            printf("  %-20s  从未被调用，GOT 保持 PLT 桩地址 ⏭️\n", label); \
+    } while(0)
 
-    printf(">>> 进程 PID=%d，正在挂起，Ctrl+C 退出...\n", getpid());
+    CHECK("__libc_start_main", before_libc,   after_libc);
+    CHECK("printf",           before_printf, after_printf);
+    CHECK("test_a",           before_test_a, after_test_a);
+    CHECK("test_c",           before_test_c, after_test_c);
+    CHECK("getpid",           before_getpid, after_getpid);
+    CHECK("puts",             before_puts,   after_puts);
+    CHECK("test_b",           before_test_b, after_test_b);
+
+    printf("\n>>> 进程 PID=%d，正在挂起，Ctrl+C 退出...\n", getpid());
     while(1);
     return 0;
 }

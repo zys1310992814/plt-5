@@ -65,20 +65,20 @@ $(TARGET2):
 	@echo "    查看 GOT: cat got got_plt"
 
 # ========== 运行 ==========
-run:
+run: $(TARGET2)
 	@echo "=========================================="
 	@echo "  运行 32 位 PLT/GOT 演示"
 	@echo "=========================================="
 	LD_LIBRARY_PATH=. ./test
 
-run64:
+run64: $(TARGET1)
 	@echo "=========================================="
 	@echo "  运行 64 位 PLT/GOT 演示"
 	@echo "=========================================="
 	LD_LIBRARY_PATH=. ./test_x64
 
 # ========== 汇总展示 ==========
-dump:
+dump: $(TARGET2)
 	@echo ""
 	@echo "=========================================="
 	@echo "  32 位 PLT/GOT 分析报告"
@@ -96,7 +96,7 @@ dump:
 	@echo "--- [4] GOT 十六进制内容 ---"
 	@cat got_plt 2>/dev/null || cat got
 
-dump64:
+dump64: $(TARGET1)
 	@echo ""
 	@echo "=========================================="
 	@echo "  64 位 PLT/GOT 分析报告"
