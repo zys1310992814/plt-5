@@ -1,0 +1,120 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) 调试 32位 test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/test",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "${workspaceFolder}"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "为 GDB 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "将反汇编风格设置为 Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "加载符号文件",
+                    "text": "-file-exec-and-symbols ${workspaceFolder}/test",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "设置在 main 处断点",
+                    "text": "-break-insert main",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "build 32",
+            "logging": {
+                "engineLogging": false,
+                "trace": false,
+                "traceResponse": false
+            },
+            "visualizerFile": null
+        },
+        {
+            "name": "(gdb) 调试 64位 test_x64",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_x64",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "${workspaceFolder}"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "为 GDB 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "将反汇编风格设置为 Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "加载符号文件",
+                    "text": "-file-exec-and-symbols ${workspaceFolder}/test_x64",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "设置在 main 处断点",
+                    "text": "-break-insert main",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "build 64",
+            "logging": {
+                "engineLogging": false,
+                "trace": false,
+                "traceResponse": false
+            },
+            "visualizerFile": null
+        },
+        {
+            "name": "(gdb) 直接附加到运行中的 test 进程",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "${workspaceFolder}/test",
+            "processId": "${command:pickProcess}",
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "为 GDB 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "将反汇编风格设置为 Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
